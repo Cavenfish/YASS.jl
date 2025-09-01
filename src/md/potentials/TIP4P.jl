@@ -76,15 +76,16 @@ TIP4Pf(bdys::Union{MyCell, Vector{MyAtoms}}) = _TIP4P_PotVars(
 )
 
 function TIP4Pf!(F, u, p)
-  E = 0.0
-  P = p.potVars
+  E   = 0.0
+  P   = p.potVars
+  lat = isa(p, optVars) ? p.lattice : p.ensemble.lattice
 
   for mol in p.mols
     o, h1, h2 = mol
 
-    E += _Morse!(F, u, o, h1, P.D, P.a, P.req)
-    E += _Morse!(F, u, o, h2, P.D, P.a, P.req)
-    E += _harmonicBondAngle!(F, u, h1, o, h2, P.K, P.θeq)
+    E += _Morse!(F, u, lat, o, h1, P.D, P.a, P.req)
+    E += _Morse!(F, u, lat, o, h2, P.D, P.a, P.req)
+    E += _harmonicBondAngle!(F, u, lat, h1, o, h2, P.K, P.θeq)
   end
 
   for i = 1:length(p.mols)
@@ -126,8 +127,7 @@ function TIP4Pf!(F, u, p)
   end
 
   if any(p.PBC)
-    NC    = p.NC .* p.PBC
-    lat   = isa(p, optVars) ? p.lattice : p.ensemble.lattice
+    NC = p.NC .* p.PBC
 
     for i = 1:length(p.mols)
       a = p.mols[i]
